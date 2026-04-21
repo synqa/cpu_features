@@ -20,8 +20,8 @@ pub fn build(b: *std.Build) void {
         }),
     });
 
-    cpu_features.addIncludePath(b.path("include"));
-    cpu_features.addIncludePath(b.path("include/internal"));
+    cpu_features.root_module.addIncludePath(b.path("include"));
+    cpu_features.root_module.addIncludePath(b.path("include/internal"));
 
     // Public compile definitions
     cpu_features.root_module.addCMacro("STACK_LINE_READER_BUFFER_SIZE", "1024");
@@ -62,7 +62,7 @@ pub fn build(b: *std.Build) void {
     };
 
     for (utility_sources) |source| {
-        cpu_features.addCSourceFile(.{
+        cpu_features.root_module.addCSourceFile(.{
             .file = b.path(source),
             .flags = &c_flags,
         });
@@ -78,7 +78,7 @@ pub fn build(b: *std.Build) void {
         };
 
         for (hwcaps_sources) |source| {
-            cpu_features.addCSourceFile(.{
+            cpu_features.root_module.addCSourceFile(.{
                 .file = b.path(source),
                 .flags = &c_flags,
             });
@@ -103,7 +103,7 @@ pub fn build(b: *std.Build) void {
                 null;
 
             if (source) |s| {
-                cpu_features.addCSourceFile(.{
+                cpu_features.root_module.addCSourceFile(.{
                     .file = b.path(s),
                     .flags = &c_flags,
                 });
@@ -113,7 +113,7 @@ pub fn build(b: *std.Build) void {
         },
         .aarch64, .aarch64_be => {
             // AArch64 architecture - always needs cpuid
-            cpu_features.addCSourceFile(.{
+            cpu_features.root_module.addCSourceFile(.{
                 .file = b.path("src/impl_aarch64_cpuid.c"),
                 .flags = &c_flags,
             });
@@ -130,7 +130,7 @@ pub fn build(b: *std.Build) void {
                 null;
 
             if (source) |s| {
-                cpu_features.addCSourceFile(.{
+                cpu_features.root_module.addCSourceFile(.{
                     .file = b.path(s),
                     .flags = &c_flags,
                 });
@@ -141,7 +141,7 @@ pub fn build(b: *std.Build) void {
         .arm, .armeb, .thumb, .thumbeb => {
             // ARM (32-bit) architecture
             if (os_tag == .linux) {
-                cpu_features.addCSourceFile(.{
+                cpu_features.root_module.addCSourceFile(.{
                     .file = b.path("src/impl_arm_linux_or_android.c"),
                     .flags = &c_flags,
                 });
@@ -150,7 +150,7 @@ pub fn build(b: *std.Build) void {
         .mips, .mipsel, .mips64, .mips64el => {
             // MIPS architecture
             if (os_tag == .linux) {
-                cpu_features.addCSourceFile(.{
+                cpu_features.root_module.addCSourceFile(.{
                     .file = b.path("src/impl_mips_linux_or_android.c"),
                     .flags = &c_flags,
                 });
@@ -160,7 +160,7 @@ pub fn build(b: *std.Build) void {
         .powerpc, .powerpcle, .powerpc64, .powerpc64le => {
             // PowerPC architecture
             if (os_tag == .linux) {
-                cpu_features.addCSourceFile(.{
+                cpu_features.root_module.addCSourceFile(.{
                     .file = b.path("src/impl_ppc_linux.c"),
                     .flags = &c_flags,
                 });
@@ -170,7 +170,7 @@ pub fn build(b: *std.Build) void {
         .riscv32, .riscv64 => {
             // RISC-V architecture
             if (os_tag == .linux) {
-                cpu_features.addCSourceFile(.{
+                cpu_features.root_module.addCSourceFile(.{
                     .file = b.path("src/impl_riscv_linux.c"),
                     .flags = &c_flags,
                 });
@@ -180,7 +180,7 @@ pub fn build(b: *std.Build) void {
         .s390x => {
             // s390x architecture
             if (os_tag == .linux) {
-                cpu_features.addCSourceFile(.{
+                cpu_features.root_module.addCSourceFile(.{
                     .file = b.path("src/impl_s390x_linux.c"),
                     .flags = &c_flags,
                 });
@@ -190,7 +190,7 @@ pub fn build(b: *std.Build) void {
         .loongarch64 => {
             // LoongArch architecture
             if (os_tag == .linux) {
-                cpu_features.addCSourceFile(.{
+                cpu_features.root_module.addCSourceFile(.{
                     .file = b.path("src/impl_loongarch_linux.c"),
                     .flags = &c_flags,
                 });
@@ -207,7 +207,7 @@ pub fn build(b: *std.Build) void {
 
     // Link against dl library on Unix-like systems
     if (os_tag != .windows and os_tag != .wasi) {
-        cpu_features.linkSystemLibrary("dl");
+        cpu_features.root_module.linkSystemLibrary("dl", .{});
     }
 
     // Install the library if enabled
@@ -226,9 +226,9 @@ pub fn build(b: *std.Build) void {
             }),
         });
 
-        list_cpu_features.linkLibrary(cpu_features);
+        list_cpu_features.root_module.linkLibrary(cpu_features);
 
-        list_cpu_features.addCSourceFile(.{
+        list_cpu_features.root_module.addCSourceFile(.{
             .file = b.path("src/utils/list_cpu_features.c"),
             .flags = &c_flags,
         });
